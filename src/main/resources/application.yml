@@ -1,0 +1,60 @@
+spring:
+  application:
+    name: document-management-service
+
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/documentdb}
+    username: ${DATABASE_USERNAME:postgres}
+    password: ${DATABASE_PASSWORD:postgres}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_batch_fetch_size: 50   # batch-loads ElementCollections — avoids N+1 on tags
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 500MB
+      max-request-size: 500MB
+      # Spool multipart data to a temp file immediately — never buffer in heap.
+      # This is the key to handling 500 MB uploads with a 50 MB memory limit.
+      file-size-threshold: 0B
+
+minio:
+  endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+  access-key: ${MINIO_ACCESS_KEY:minioadmin}
+  secret-key: ${MINIO_SECRET_KEY:minioadmin}
+  bucket: ${MINIO_BUCKET:document-bucket}
+  presigned-url-expiry-minutes: ${MINIO_PRESIGNED_EXPIRY_MINUTES:60}
+
+server:
+  port: ${SERVER_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    com.clara.documentmanagement: INFO
+    io.minio: WARN
