@@ -5,10 +5,8 @@ import jakarta.validation.constraints.Positive;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
-@Component
 @ConfigurationProperties(prefix = "minio")
 @Validated
 @Getter
@@ -16,6 +14,7 @@ import org.springframework.validation.annotation.Validated;
 public class MinioProperties {
 
   @NotBlank private String endpoint;
+  private String publicEndpoint; // external URL for presigned URLs; defaults to endpoint
   @NotBlank private String accessKey;
   @NotBlank private String secretKey;
   @NotBlank private String bucket;

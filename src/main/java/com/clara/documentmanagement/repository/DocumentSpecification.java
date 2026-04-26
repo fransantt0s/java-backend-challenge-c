@@ -7,6 +7,10 @@ import org.springframework.data.jpa.domain.Specification;
 
 public final class DocumentSpecification {
 
+  private static final String FIELD_USER_ID = "userId";
+  private static final String FIELD_DOCUMENT_NAME = "documentName";
+  private static final String FIELD_TAGS = "tags";
+
   private DocumentSpecification() {}
 
   public static Specification<Document> build(
@@ -19,14 +23,15 @@ public final class DocumentSpecification {
   private static Specification<Document> withUserId(String userId) {
     return (root, query, cb) -> {
       if (userId == null || userId.isBlank()) return null;
-      return cb.equal(root.get("userId"), userId);
+      return cb.equal(root.get(FIELD_USER_ID), userId);
     };
   }
 
   private static Specification<Document> withDocumentName(String documentName) {
     return (root, query, cb) -> {
       if (documentName == null || documentName.isBlank()) return null;
-      return cb.like(cb.lower(root.get("documentName")), "%" + documentName.toLowerCase() + "%");
+      return cb.like(
+          cb.lower(root.get(FIELD_DOCUMENT_NAME)), "%" + documentName.toLowerCase() + "%");
     };
   }
 
@@ -39,7 +44,7 @@ public final class DocumentSpecification {
     return (root, query, cb) -> {
       if (tags == null || tags.isEmpty()) return null;
       query.distinct(true);
-      return root.join("tags", JoinType.INNER).in(tags);
+      return root.join(FIELD_TAGS, JoinType.INNER).in(tags);
     };
   }
 }
