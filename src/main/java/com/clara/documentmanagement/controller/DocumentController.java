@@ -13,7 +13,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("/documents")
+@RequestMapping("/api/v1/documents")
 @RequiredArgsConstructor
 @Validated
 @Tag(name = "Documents", description = "Document management operations")
@@ -45,7 +44,7 @@ public class DocumentController {
         @ApiResponse(responseCode = "413", description = "File exceeds 500 MB limit")
       })
   public DocumentResponse upload(
-      @RequestParam @NotBlank String user,
+      @RequestParam @NotBlank String userId,
       @RequestParam @NotBlank String documentName,
       @RequestParam(required = false) List<String> tags,
       @RequestParam("file")
@@ -53,10 +52,9 @@ public class DocumentController {
           @Parameter(
               description = "PDF file to upload",
               content = @Content(mediaType = MediaType.APPLICATION_PDF_VALUE))
-          MultipartFile file)
-      throws IOException {
+          MultipartFile file) {
 
-    return documentService.upload(user, documentName, tags, file);
+    return documentService.upload(userId, documentName, tags, file);
   }
 
   @GetMapping
@@ -72,13 +70,13 @@ public class DocumentController {
             content = @Content(schema = @Schema(implementation = PagedDocumentResponse.class)))
       })
   public PagedDocumentResponse search(
-      @RequestParam(required = false) String user,
+      @RequestParam(required = false) String userId,
       @RequestParam(required = false) String documentName,
       @RequestParam(required = false) List<String> tags,
       @RequestParam(defaultValue = "0") @Min(0) int page,
       @RequestParam(defaultValue = "10") @Min(1) int size) {
 
-    return documentService.search(user, documentName, tags, page, size);
+    return documentService.search(userId, documentName, tags, page, size);
   }
 
   @GetMapping("/{id}/download")

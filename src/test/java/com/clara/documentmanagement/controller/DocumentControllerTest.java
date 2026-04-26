@@ -27,6 +27,8 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 @ExtendWith(MockitoExtension.class)
 class DocumentControllerTest {
 
+  private static final String BASE_URL = "/api/v1/documents";
+
   @Mock private DocumentService documentService;
 
   @InjectMocks private DocumentController documentController;
@@ -49,14 +51,13 @@ class DocumentControllerTest {
             .userId("user1")
             .documentName("test.pdf")
             .tags(List.of("finance"))
-            .minioPath("user1/" + documentId + "/test.pdf")
             .fileSize(1024L)
             .fileType("application/pdf")
             .createdAt(LocalDateTime.now())
             .build();
   }
 
-  // ── POST /documents ────────────────────────────────────────────────────────
+  // ── POST /api/v1/documents ─────────────────────────────────────────────────
 
   @Test
   void upload_validRequest_returns201() throws Exception {
@@ -68,9 +69,9 @@ class DocumentControllerTest {
 
     mockMvc
         .perform(
-            multipart("/documents")
+            multipart(BASE_URL)
                 .file(pdf)
-                .param("user", "user1")
+                .param("userId", "user1")
                 .param("documentName", "test.pdf")
                 .param("tags", "finance"))
         .andExpect(status().isCreated())
@@ -79,23 +80,23 @@ class DocumentControllerTest {
   }
 
   @Test
-  void upload_missingUser_returns400() throws Exception {
+  void upload_missingUserId_returns400() throws Exception {
     MockMultipartFile pdf =
         new MockMultipartFile("file", "test.pdf", "application/pdf", new byte[100]);
 
     mockMvc
-        .perform(multipart("/documents").file(pdf).param("documentName", "test.pdf"))
+        .perform(multipart(BASE_URL).file(pdf).param("documentName", "test.pdf")) // missing userId
         .andExpect(status().isBadRequest());
   }
 
   @Test
   void upload_missingFile_returns400() throws Exception {
     mockMvc
-        .perform(multipart("/documents").param("user", "user1").param("documentName", "test.pdf"))
+        .perform(multipart(BASE_URL).param("userId", "user1").param("documentName", "test.pdf"))
         .andExpect(status().isBadRequest());
   }
 
-  // ── GET /documents ─────────────────────────────────────────────────────────
+  // ── GET /api/v1/documents ──────────────────────────────────────────────────
 
   @Test
   void search_noFilters_returns200() throws Exception {
@@ -112,7 +113,7 @@ class DocumentControllerTest {
     when(documentService.search(isNull(), isNull(), isNull(), eq(0), eq(10))).thenReturn(paged);
 
     mockMvc
-        .perform(get("/documents"))
+        .perform(get(BASE_URL)) // no userId → null, returns all
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.content").isArray())
         .andExpect(jsonPath("$.totalElements").value(1));
@@ -134,15 +135,12 @@ class DocumentControllerTest {
 
     mockMvc
         .perform(
-            get("/documents")
-                .param("user", "user1")
-                .param("documentName", "test")
-                .param("size", "5"))
+            get(BASE_URL).param("userId", "user1").param("documentName", "test").param("size", "5"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.totalElements").value(0));
   }
 
-  // ── GET /documents/{id}/download ───────────────────────────────────────────
+  // ── GET /api/v1/documents/{id}/download ────────────────────────────────────
 
   @Test
   void download_existingId_returnsPresignedUrl() throws Exception {
@@ -156,7 +154,7 @@ class DocumentControllerTest {
     when(documentService.generateDownloadUrl(documentId)).thenReturn(urlResponse);
 
     mockMvc
-        .perform(get("/documents/{id}/download", documentId))
+        .perform(get(BASE_URL + "/{id}/download", documentId))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.url").value("https://minio/signed"))
         .andExpect(jsonPath("$.expiresInMinutes").value(60));
@@ -169,7 +167,7 @@ class DocumentControllerTest {
         .thenThrow(new DocumentNotFoundException(missing));
 
     mockMvc
-        .perform(get("/documents/{id}/download", missing))
+        .perform(get(BASE_URL + "/{id}/download", missing))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.message").exists());
   }
@@ -177,7 +175,7 @@ class DocumentControllerTest {
   @Test
   void download_invalidUuid_returns400() throws Exception {
     mockMvc
-        .perform(get("/documents/{id}/download", "not-a-uuid"))
+        .perform(get(BASE_URL + "/{id}/download", "not-a-uuid"))
         .andExpect(status().isBadRequest());
   }
 }
