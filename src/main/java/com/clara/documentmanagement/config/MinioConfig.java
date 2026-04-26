@@ -23,9 +23,9 @@ public class MinioConfig {
   }
 
   /**
-   * Separate client for presigned URLs so the signature is computed with the public host.
-   * Region is set explicitly to avoid the SDK making a network call to the endpoint to detect it —
-   * which would fail when publicEndpoint (e.g. localhost:9000) is unreachable from inside Docker.
+   * Separate client for presigned URLs so the signature is computed with the public host. Region is
+   * set explicitly to avoid the SDK making a network call to the endpoint to detect it — which
+   * would fail when publicEndpoint (e.g. localhost:9000) is unreachable from inside Docker.
    */
   @Bean
   @Qualifier("presigned")

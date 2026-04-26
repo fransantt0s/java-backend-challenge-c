@@ -30,8 +30,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 class DocumentIntegrationTest {
 
   private static final String BASE_URL = "/api/v1/documents";
-  private static final byte[] PDF_CONTENT =
-      "%PDF-1.4\n%%EOF\n".getBytes(StandardCharsets.UTF_8);
+  private static final byte[] PDF_CONTENT = "%PDF-1.4\n%%EOF\n".getBytes(StandardCharsets.UTF_8);
 
   @Container
   static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15-alpine");
@@ -53,8 +52,7 @@ class DocumentIntegrationTest {
     registry.add("spring.datasource.username", postgres::getUsername);
     registry.add("spring.datasource.password", postgres::getPassword);
     registry.add(
-        "minio.endpoint",
-        () -> "http://" + minio.getHost() + ":" + minio.getMappedPort(9000));
+        "minio.endpoint", () -> "http://" + minio.getHost() + ":" + minio.getMappedPort(9000));
     registry.add("minio.access-key", () -> "minioadmin");
     registry.add("minio.secret-key", () -> "minioadmin");
     registry.add("minio.bucket", () -> "test-bucket");
@@ -124,8 +122,7 @@ class DocumentIntegrationTest {
     mockMvc
         .perform(
             multipart(BASE_URL)
-                .file(
-                    new MockMultipartFile("file", "fake.pdf", "application/pdf", new byte[64]))
+                .file(new MockMultipartFile("file", "fake.pdf", "application/pdf", new byte[64]))
                 .param("userId", "bob")
                 .param("documentName", "fake.pdf"))
         .andExpect(status().isBadRequest())
