@@ -69,8 +69,7 @@ public class DocumentController {
         @ApiResponse(
             responseCode = "200",
             description = "Search results",
-            content =
-                @Content(schema = @Schema(implementation = PagedDocumentResponse.class)))
+            content = @Content(schema = @Schema(implementation = PagedDocumentResponse.class)))
       })
   public PagedDocumentResponse search(
       @RequestParam(required = false) String user,

@@ -26,8 +26,7 @@ public final class DocumentSpecification {
   private static Specification<Document> withDocumentName(String documentName) {
     return (root, query, cb) -> {
       if (documentName == null || documentName.isBlank()) return null;
-      return cb.like(
-          cb.lower(root.get("documentName")), "%" + documentName.toLowerCase() + "%");
+      return cb.like(cb.lower(root.get("documentName")), "%" + documentName.toLowerCase() + "%");
     };
   }
 

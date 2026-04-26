@@ -66,11 +66,9 @@ public class DocumentService {
   public PagedDocumentResponse search(
       String userId, String documentName, List<String> tags, int page, int size) {
 
-    Pageable pageable =
-        PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+    Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-    Specification<Document> spec =
-        DocumentSpecification.build(userId, documentName, tags);
+    Specification<Document> spec = DocumentSpecification.build(userId, documentName, tags);
 
     Page<DocumentResponse> resultPage =
         documentRepository.findAll(spec, pageable).map(DocumentResponse::from);

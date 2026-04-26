@@ -39,18 +39,16 @@ public class MinioStorageService implements StorageService {
 
   /**
    * Streams the file to MinIO using the MinIO SDK's internal multipart upload for large objects.
-   * The SDK reads the stream in configurable chunks — heap usage remains bounded regardless of
-   * file size.
+   * The SDK reads the stream in configurable chunks — heap usage remains bounded regardless of file
+   * size.
    */
   @Override
   public void store(
       String objectKey, InputStream inputStream, long contentLength, String contentType) {
     try {
       minioClient.putObject(
-          PutObjectArgs.builder()
-              .bucket(minioProperties.getBucket())
-              .object(objectKey)
-              .stream(inputStream, contentLength, -1) // -1 → SDK auto-selects part size
+          PutObjectArgs.builder().bucket(minioProperties.getBucket()).object(objectKey).stream(
+                  inputStream, contentLength, -1) // -1 → SDK auto-selects part size
               .contentType(contentType)
               .build());
       log.info("Stored object: {}/{}", minioProperties.getBucket(), objectKey);

@@ -20,7 +20,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -92,8 +91,7 @@ class DocumentControllerTest {
   @Test
   void upload_missingFile_returns400() throws Exception {
     mockMvc
-        .perform(
-            multipart("/documents").param("user", "user1").param("documentName", "test.pdf"))
+        .perform(multipart("/documents").param("user", "user1").param("documentName", "test.pdf"))
         .andExpect(status().isBadRequest());
   }
 

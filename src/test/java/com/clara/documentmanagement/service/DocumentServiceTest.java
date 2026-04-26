@@ -122,8 +122,7 @@ class DocumentServiceTest {
 
   @Test
   void generateDownloadUrl_existingDocument_returnsUrl() {
-    when(documentRepository.findById(savedDocument.getId()))
-        .thenReturn(Optional.of(savedDocument));
+    when(documentRepository.findById(savedDocument.getId())).thenReturn(Optional.of(savedDocument));
     when(storageService.generatePresignedUrl(savedDocument.getMinioPath()))
         .thenReturn("https://minio/signed-url");
 
