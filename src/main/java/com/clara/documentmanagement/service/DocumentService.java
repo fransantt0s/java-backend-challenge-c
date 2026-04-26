@@ -5,10 +5,12 @@ import com.clara.documentmanagement.dto.response.DocumentResponse;
 import com.clara.documentmanagement.dto.response.DownloadUrlResponse;
 import com.clara.documentmanagement.dto.response.PagedDocumentResponse;
 import com.clara.documentmanagement.exception.DocumentNotFoundException;
+import com.clara.documentmanagement.exception.StorageException;
 import com.clara.documentmanagement.model.Document;
 import com.clara.documentmanagement.repository.DocumentRepository;
 import com.clara.documentmanagement.repository.DocumentSpecification;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -35,17 +37,15 @@ public class DocumentService {
 
   @Transactional
   public DocumentResponse upload(
-      String userId, String documentName, List<String> tags, MultipartFile file)
-      throws IOException {
+      String userId, String documentName, List<String> tags, MultipartFile file) {
 
     validatePdf(file);
 
     UUID documentId = UUID.randomUUID();
     String objectKey = buildObjectKey(userId, documentId, documentName);
 
-    // Stream the file to MinIO — no full buffering in heap
-    storageService.store(objectKey, file.getInputStream(), file.getSize(), PDF_CONTENT_TYPE);
-
+    // Persist metadata first — if validation or DB constraints fail, no file is orphaned in MinIO.
+    // If the subsequent MinIO write fails, @Transactional rolls back the DB record automatically.
     Document document =
         Document.builder()
             .id(documentId)
@@ -58,6 +58,13 @@ public class DocumentService {
             .build();
 
     Document saved = documentRepository.save(document);
+
+    try {
+      storageService.store(objectKey, file.getInputStream(), file.getSize(), PDF_CONTENT_TYPE);
+    } catch (IOException ex) {
+      throw new StorageException("Failed to read uploaded file: " + documentName, ex);
+    }
+
     log.info("Uploaded document: id={}, user={}, name={}", saved.getId(), userId, documentName);
     return DocumentResponse.from(saved);
   }
@@ -94,16 +101,27 @@ public class DocumentService {
     if (file == null || file.isEmpty()) {
       throw new IllegalArgumentException("File must not be empty");
     }
-    String contentType = file.getContentType();
-    if (!PDF_CONTENT_TYPE.equalsIgnoreCase(contentType)) {
+    if (!PDF_CONTENT_TYPE.equalsIgnoreCase(file.getContentType())) {
       throw new IllegalArgumentException(
-          "Only PDF files are accepted. Received content type: " + contentType);
+          "Only PDF files are accepted. Received content type: " + file.getContentType());
+    }
+    // Content-Type can be spoofed — verify the actual %PDF magic number
+    try (InputStream is = file.getInputStream()) {
+      byte[] header = new byte[4];
+      if (is.read(header) < 4
+          || header[0] != '%'
+          || header[1] != 'P'
+          || header[2] != 'D'
+          || header[3] != 'F') {
+        throw new IllegalArgumentException("File is not a valid PDF (missing %PDF header)");
+      }
+    } catch (IOException ex) {
+      throw new StorageException("Failed to read file header for validation", ex);
     }
   }
 
   private String buildObjectKey(String userId, UUID documentId, String documentName) {
-    // Structure: {userId}/{documentId}/{documentName}
-    // The documentId component guarantees uniqueness even for same-named files.
+    // The documentId component guarantees uniqueness even for same-named files from the same user.
     return userId + "/" + documentId + "/" + documentName;
   }
 }

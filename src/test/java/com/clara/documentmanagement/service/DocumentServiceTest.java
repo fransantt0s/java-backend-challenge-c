@@ -10,8 +10,7 @@ import com.clara.documentmanagement.dto.response.DownloadUrlResponse;
 import com.clara.documentmanagement.exception.DocumentNotFoundException;
 import com.clara.documentmanagement.model.Document;
 import com.clara.documentmanagement.repository.DocumentRepository;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -28,6 +27,9 @@ import org.springframework.mock.web.MockMultipartFile;
 @ExtendWith(MockitoExtension.class)
 class DocumentServiceTest {
 
+  private static final byte[] PDF_CONTENT =
+      "%PDF-1.4 test content".getBytes(StandardCharsets.UTF_8);
+
   @Mock private DocumentRepository documentRepository;
   @Mock private StorageService storageService;
   @Mock private MinioProperties minioProperties;
@@ -39,9 +41,7 @@ class DocumentServiceTest {
 
   @BeforeEach
   void setUp() {
-    validPdf =
-        new MockMultipartFile(
-            "file", "test.pdf", "application/pdf", new ByteArrayInputStream(new byte[100]));
+    validPdf = new MockMultipartFile("file", "test.pdf", "application/pdf", PDF_CONTENT);
 
     savedDocument =
         Document.builder()
@@ -50,24 +50,23 @@ class DocumentServiceTest {
             .documentName("test.pdf")
             .tags(List.of("tag1", "tag2"))
             .minioPath("user1/some-uuid/test.pdf")
-            .fileSize(100L)
+            .fileSize((long) PDF_CONTENT.length)
             .fileType("application/pdf")
             .createdAt(LocalDateTime.now())
             .build();
-
-    when(minioProperties.getPresignedUrlExpiryMinutes()).thenReturn(60);
   }
 
   // ── Upload ────────────────────────────────────────────────────────────────
 
   @Test
-  void upload_validPdf_storesAndPersists() throws IOException {
+  void upload_validPdf_storesAndPersists() throws Exception {
     when(documentRepository.save(any(Document.class))).thenReturn(savedDocument);
 
     DocumentResponse response =
         documentService.upload("user1", "test.pdf", List.of("tag1", "tag2"), validPdf);
 
-    verify(storageService).store(anyString(), any(), eq(100L), eq("application/pdf"));
+    verify(storageService)
+        .store(anyString(), any(), eq((long) PDF_CONTENT.length), eq("application/pdf"));
     verify(documentRepository).save(any(Document.class));
 
     assertThat(response.getUserId()).isEqualTo("user1");
@@ -76,7 +75,7 @@ class DocumentServiceTest {
   }
 
   @Test
-  void upload_objectKeyContainsUserId() throws IOException {
+  void upload_objectKeyContainsUserId() throws Exception {
     when(documentRepository.save(any(Document.class))).thenReturn(savedDocument);
 
     documentService.upload("alice", "report.pdf", List.of(), validPdf);
@@ -89,7 +88,7 @@ class DocumentServiceTest {
   }
 
   @Test
-  void upload_nullTags_defaultsToEmptyList() throws IOException {
+  void upload_nullTags_defaultsToEmptyList() throws Exception {
     ArgumentCaptor<Document> docCaptor = ArgumentCaptor.forClass(Document.class);
     when(documentRepository.save(docCaptor.capture())).thenReturn(savedDocument);
 
@@ -99,13 +98,23 @@ class DocumentServiceTest {
   }
 
   @Test
-  void upload_nonPdfFile_throwsIllegalArgument() {
+  void upload_nonPdfContentType_throwsIllegalArgument() {
     MockMultipartFile nonPdf =
         new MockMultipartFile("file", "image.png", "image/png", new byte[10]);
 
     assertThatThrownBy(() -> documentService.upload("user1", "image.png", null, nonPdf))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("PDF");
+  }
+
+  @Test
+  void upload_pdfContentTypeButInvalidMagicNumber_throwsIllegalArgument() {
+    MockMultipartFile fakePdf =
+        new MockMultipartFile("file", "fake.pdf", "application/pdf", new byte[64]);
+
+    assertThatThrownBy(() -> documentService.upload("user1", "fake.pdf", null, fakePdf))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("%PDF");
   }
 
   @Test
@@ -122,6 +131,7 @@ class DocumentServiceTest {
 
   @Test
   void generateDownloadUrl_existingDocument_returnsUrl() {
+    when(minioProperties.getPresignedUrlExpiryMinutes()).thenReturn(60);
     when(documentRepository.findById(savedDocument.getId())).thenReturn(Optional.of(savedDocument));
     when(storageService.generatePresignedUrl(savedDocument.getMinioPath()))
         .thenReturn("https://minio/signed-url");
