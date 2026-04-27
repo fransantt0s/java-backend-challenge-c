@@ -45,7 +45,8 @@ class DocumentSpecificationTest {
 
   @Test
   void build_emptyTagList_treatedAsAbsent() {
-    Predicate result = DocumentSpecification.build(null, null, List.of()).toPredicate(root, query, cb);
+    Predicate result =
+        DocumentSpecification.build(null, null, List.of()).toPredicate(root, query, cb);
     assertThat(result).isNull();
   }
 
@@ -93,5 +94,4 @@ class DocumentSpecificationTest {
     verify(query).distinct(true);
     verify(root).join("tags", JoinType.INNER);
   }
-
 }

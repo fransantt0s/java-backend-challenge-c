@@ -230,9 +230,17 @@ class DtoResponseTest {
   void downloadUrlResponse_equalsAndHashCode_symmetric() {
     UUID docId = UUID.randomUUID();
     DownloadUrlResponse a =
-        DownloadUrlResponse.builder().documentId(docId).url("http://x").expiresInMinutes(30).build();
+        DownloadUrlResponse.builder()
+            .documentId(docId)
+            .url("http://x")
+            .expiresInMinutes(30)
+            .build();
     DownloadUrlResponse b =
-        DownloadUrlResponse.builder().documentId(docId).url("http://x").expiresInMinutes(30).build();
+        DownloadUrlResponse.builder()
+            .documentId(docId)
+            .url("http://x")
+            .expiresInMinutes(30)
+            .build();
 
     assertThat(a).isEqualTo(b);
     assertThat(a.hashCode()).isEqualTo(b.hashCode());
@@ -244,9 +252,17 @@ class DtoResponseTest {
   void downloadUrlResponse_notEqualWhenUrlDiffers() {
     UUID docId = UUID.randomUUID();
     DownloadUrlResponse a =
-        DownloadUrlResponse.builder().documentId(docId).url("http://a").expiresInMinutes(60).build();
+        DownloadUrlResponse.builder()
+            .documentId(docId)
+            .url("http://a")
+            .expiresInMinutes(60)
+            .build();
     DownloadUrlResponse b =
-        DownloadUrlResponse.builder().documentId(docId).url("http://b").expiresInMinutes(60).build();
+        DownloadUrlResponse.builder()
+            .documentId(docId)
+            .url("http://b")
+            .expiresInMinutes(60)
+            .build();
 
     assertThat(a).isNotEqualTo(b);
   }
