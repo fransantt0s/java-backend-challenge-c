@@ -133,26 +133,29 @@ The URL can be opened directly in a browser or used with any HTTP client. It exp
 
 ## Running tests
 
-Unit and controller tests (no Docker required):
-
-```bash
-./mvnw test -Dtest="DocumentServiceTest,DocumentControllerTest"
-```
-
-Full suite including integration tests (requires Docker):
+Unit tests (no Docker required):
 
 ```bash
 ./mvnw test
 ```
 
-Integration tests use Testcontainers to spin up real PostgreSQL and MinIO containers. They are automatically skipped if Docker is not available.
+Integration tests use Testcontainers to spin up real PostgreSQL and MinIO containers and are automatically skipped when Docker is not available.
 
-Generate coverage report:
+Generate the coverage report after running tests:
 
 ```bash
 ./mvnw jacoco:report
 # open target/site/jacoco/index.html
 ```
+
+### Coverage summary
+
+| Metric | Result |
+|--------|--------|
+| Instruction coverage | **81%** (1,439 / 1,775) |
+| Branch coverage | **54%** (81 / 148) |
+| Classes at 100% instruction coverage | `DocumentController`, `DocumentSpecification`, `GlobalExceptionHandler`, `MinioStorageService`, `StorageException`, `DocumentNotFoundException`, `ErrorResponse` |
+| Excluded from coverage | `DocumentManagementApplication` (Spring Boot `main`), `MinioConfig` / `MinioProperties` (Spring context beans — covered by integration tests) |
 
 Apply code formatting:
 
@@ -253,3 +256,13 @@ The result is a service where heap pressure is determined by request concurrency
 ### MinIO path structure
 
 The challenge example shows `user1/doc1.pdf`. This implementation uses `user1/{documentId}/doc1.pdf`. The UUID in the middle is a deliberate choice: without it, two uploads of `report.pdf` by the same user would overwrite each other in MinIO silently. The `documentId` guarantees uniqueness while preserving the user-based directory structure and keeping the original filename readable at the end of the path.
+
+
+### JaCoCo (Java Code Coverage)
+
+![img.png](img.png)
+
+
+### All tests running 
+
+![img_1.png](img_1.png)
