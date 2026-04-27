@@ -102,7 +102,7 @@ class DocumentIntegrationTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.url", notNullValue()))
         .andExpect(jsonPath("$.documentId").value(documentId))
-        .andExpect(jsonPath("$.expiresInMinutes").value(60));
+        .andExpect(jsonPath("$.expiresInMinutes").value(10));
   }
 
   @Test

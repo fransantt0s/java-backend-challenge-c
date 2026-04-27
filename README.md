@@ -129,7 +129,7 @@ Response `200 OK`:
 }
 ```
 
-The URL can be opened directly in a browser or used with any HTTP client. It expires after 60 minutes.
+The URL can be opened directly in a browser or used with any HTTP client. It expires after 10 minutes.
 
 ## Running tests
 
@@ -177,7 +177,7 @@ All settings are externalized via environment variables. Defaults work out of th
 | `MINIO_ACCESS_KEY` | `minioadmin` | MinIO access key |
 | `MINIO_SECRET_KEY` | `minioadmin` | MinIO secret key |
 | `MINIO_BUCKET` | `document-bucket` | Target bucket name |
-| `MINIO_PRESIGNED_EXPIRY_MINUTES` | `60` | Presigned URL expiry time |
+| `MINIO_PRESIGNED_EXPIRY_MINUTES` | `10` | Presigned URL expiry time |
 | `SERVER_PORT` | `8080` | HTTP port |
 
 ## MinIO console
